@@ -1,74 +1,104 @@
 package com.jpmc.theater;
 
+import com.jpmc.theater.domain.MovieInfo;
+import com.jpmc.theater.price.BasePricingService;
+import com.jpmc.theater.price.PricingService;
+import com.jpmc.theater.price.rule.DiscountRule;
+import com.jpmc.theater.print.CombineSchedulePrinter;
+import com.jpmc.theater.print.JsonSchedulePrinter;
+import com.jpmc.theater.print.SchedulePrinter;
+import com.jpmc.theater.print.SimpleTextSchedulePrinter;
+import com.jpmc.theater.reserve.BaseReservationService;
+import com.jpmc.theater.reserve.ReservationService;
+import com.jpmc.theater.schedule.BaseScheduleService;
+import com.jpmc.theater.schedule.ScheduleService;
+import com.jpmc.theater.util.LocalDateProvider;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+import java.math.BigDecimal;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
+/**
+ * Theater Facade
+ * The class is thread safe
+ */
+@Getter
+@RequiredArgsConstructor
 public class Theater {
 
-    LocalDateProvider provider;
-    private List<Showing> schedule;
+    private final ReservationService reservationService;
+    private final SchedulePrinter schedulePrinter;
 
-    public Theater(LocalDateProvider provider) {
-        this.provider = provider;
-
-        Movie spiderMan = new Movie("Spider-Man: No Way Home", Duration.ofMinutes(90), 12.5, 1);
-        Movie turningRed = new Movie("Turning Red", Duration.ofMinutes(85), 11, 0);
-        Movie theBatMan = new Movie("The Batman", Duration.ofMinutes(95), 9, 0);
-        schedule = List.of(
-            new Showing(turningRed, 1, LocalDateTime.of(provider.currentDate(), LocalTime.of(9, 0))),
-            new Showing(spiderMan, 2, LocalDateTime.of(provider.currentDate(), LocalTime.of(11, 0))),
-            new Showing(theBatMan, 3, LocalDateTime.of(provider.currentDate(), LocalTime.of(12, 50))),
-            new Showing(turningRed, 4, LocalDateTime.of(provider.currentDate(), LocalTime.of(14, 30))),
-            new Showing(spiderMan, 5, LocalDateTime.of(provider.currentDate(), LocalTime.of(16, 10))),
-            new Showing(theBatMan, 6, LocalDateTime.of(provider.currentDate(), LocalTime.of(17, 50))),
-            new Showing(turningRed, 7, LocalDateTime.of(provider.currentDate(), LocalTime.of(19, 30))),
-            new Showing(spiderMan, 8, LocalDateTime.of(provider.currentDate(), LocalTime.of(21, 10))),
-            new Showing(theBatMan, 9, LocalDateTime.of(provider.currentDate(), LocalTime.of(23, 0)))
-        );
+    /**
+     * Reserve ticket
+     *
+     * @param customer customer
+     * @param sequence sequence
+     * @param numberOfTickets number of tickets
+     * @return reservation
+     */
+    public Reservation reserve(Customer customer, int sequence, int numberOfTickets) {
+        return reservationService.reserve(customer, sequence, numberOfTickets);
     }
 
-    public Reservation reserve(Customer customer, int sequence, int howManyTickets) {
-        Showing showing;
-        try {
-            showing = schedule.get(sequence - 1);
-        } catch (RuntimeException ex) {
-            ex.printStackTrace();
-            throw new IllegalStateException("not able to find any showing for given sequence " + sequence);
-        }
-        return new Reservation(customer, showing, howManyTickets);
-    }
-
+    /**
+     * Print Schedule
+     */
     public void printSchedule() {
-        System.out.println(provider.currentDate());
-        System.out.println("===================================================");
-        schedule.forEach(s ->
-                System.out.println(s.getSequenceOfTheDay() + ": " + s.getStartTime() + " " + s.getMovie().getTitle() + " " + humanReadableFormat(s.getMovie().getRunningTime()) + " $" + s.getMovieFee())
-        );
-        System.out.println("===================================================");
-    }
-
-    public String humanReadableFormat(Duration duration) {
-        long hour = duration.toHours();
-        long remainingMin = duration.toMinutes() - TimeUnit.HOURS.toMinutes(duration.toHours());
-
-        return String.format("(%s hour%s %s minute%s)", hour, handlePlural(hour), remainingMin, handlePlural(remainingMin));
-    }
-
-    // (s) postfix should be added to handle plural correctly
-    private String handlePlural(long value) {
-        if (value == 1) {
-            return "";
-        }
-        else {
-            return "s";
-        }
+        schedulePrinter.print();
     }
 
     public static void main(String[] args) {
-        Theater theater = new Theater(LocalDateProvider.singleton());
+        Theater theater = createTheater();
         theater.printSchedule();
     }
+
+    private static Theater createTheater() {
+        ScheduleService scheduleService = new BaseScheduleService(LocalDateProvider.getInstance(), getTimeToMovieMap());
+        Set<DiscountRule> discountRules = getDiscountRules();
+        PricingService pricingService = new BasePricingService(discountRules);
+        ReservationService reservationService = new BaseReservationService(scheduleService);
+        SchedulePrinter combineSchedulePrinter = createSchedulePrinter(scheduleService, pricingService);
+
+        return new Theater(reservationService, combineSchedulePrinter);
+    }
+
+    private static SortedMap<LocalTime, Movie> getTimeToMovieMap() {
+        MovieInfo spiderManMovieInfo = new MovieInfo("Spider-Man: No Way Home", Duration.ofMinutes(90));
+        MovieInfo turningRedMovieInfo = new MovieInfo("Turning Red", Duration.ofMinutes(85));
+        MovieInfo theBatManMovieInfo = new MovieInfo("The Batman", Duration.ofMinutes(95));
+        Movie spiderMan = new Movie(spiderManMovieInfo, BigDecimal.valueOf(12.5), 12345);
+        Movie turningRed = new Movie(turningRedMovieInfo, BigDecimal.valueOf(11));
+        Movie theBatMan = new Movie(theBatManMovieInfo, BigDecimal.valueOf(9));
+
+        SortedMap<LocalTime, Movie> timeToMovieMap = new TreeMap<>();
+        timeToMovieMap.put(LocalTime.of(9, 0), turningRed);
+        timeToMovieMap.put(LocalTime.of(11, 0), spiderMan);
+        timeToMovieMap.put(LocalTime.of(12, 50), theBatMan);
+        timeToMovieMap.put(LocalTime.of(14, 30), turningRed);
+        timeToMovieMap.put(LocalTime.of(16, 10), spiderMan);
+        timeToMovieMap.put(LocalTime.of(17, 50), theBatMan);
+        timeToMovieMap.put(LocalTime.of(19, 30), turningRed);
+        timeToMovieMap.put(LocalTime.of(21, 10), spiderMan);
+        timeToMovieMap.put(LocalTime.of(23, 0), theBatMan);
+        return timeToMovieMap;
+    }
+
+    private static Set<DiscountRule> getDiscountRules() {
+        return Set.of();
+    }
+
+    private static SchedulePrinter createSchedulePrinter(ScheduleService scheduleService, PricingService pricingService) {
+        SchedulePrinter simpleTextSchedulePrinter = new SimpleTextSchedulePrinter(scheduleService, LocalDateProvider.getInstance(), pricingService);
+        SchedulePrinter jsonSchedulePrinter = new JsonSchedulePrinter(scheduleService, LocalDateProvider.getInstance(), pricingService);
+        List<SchedulePrinter> schedulePrinters = List.of(simpleTextSchedulePrinter, jsonSchedulePrinter);
+        return new CombineSchedulePrinter(schedulePrinters);
+    }
+
 }

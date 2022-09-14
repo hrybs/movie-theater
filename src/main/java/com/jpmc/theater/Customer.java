@@ -1,39 +1,20 @@
 package com.jpmc.theater;
 
-import java.util.Objects;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
+
+/**
+ * Represents customer
+ * The class is thread safe
+ */
+@Getter
+@RequiredArgsConstructor
+@EqualsAndHashCode(of="id")
+@ToString
 public class Customer {
-
-    private String name;
-
-    private String id;
-
-    /**
-     * @param name customer name
-     * @param id customer id
-     */
-    public Customer(String name, String id) {
-        this.id = id; // NOTE - id is not used anywhere at the moment
-
-        this.name = name;
-
-        }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Customer)) return false;
-        Customer customer = (Customer) o;
-        return Objects.equals(name, customer.name) && Objects.equals(id, customer.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, id);
-    }
-
-    @Override
-    public String toString() {
-        return "name: " + name;
-    }
+    private final String id;
+    private final String name;
 }

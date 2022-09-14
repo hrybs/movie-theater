@@ -1,39 +1,22 @@
 package com.jpmc.theater;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 
+/**
+ * Class represent particular showing
+ * The class is thread safe
+ */
+@Getter
+@RequiredArgsConstructor
+@EqualsAndHashCode
+@ToString
 public class Showing {
-    private Movie movie;
-    private int sequenceOfTheDay;
-    private LocalDateTime showStartTime;
-
-    public Showing(Movie movie, int sequenceOfTheDay, LocalDateTime showStartTime) {
-        this.movie = movie;
-        this.sequenceOfTheDay = sequenceOfTheDay;
-        this.showStartTime = showStartTime;
-    }
-
-    public Movie getMovie() {
-        return movie;
-    }
-
-    public LocalDateTime getStartTime() {
-        return showStartTime;
-    }
-
-    public boolean isSequence(int sequence) {
-        return this.sequenceOfTheDay == sequence;
-    }
-
-    public double getMovieFee() {
-        return movie.getTicketPrice();
-    }
-
-    public int getSequenceOfTheDay() {
-        return sequenceOfTheDay;
-    }
-
-    private double calculateFee(int audienceCount) {
-        return movie.calculateTicketPrice(this) * audienceCount;
-    }
+    private final Movie movie;
+    private final int sequenceOfTheDay;
+    private final LocalDateTime showStartTime;
 }
