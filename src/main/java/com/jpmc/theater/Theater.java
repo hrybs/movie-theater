@@ -1,6 +1,11 @@
 package com.jpmc.theater;
 
+import com.jpmc.theater.config.DiscountConfig;
+import com.jpmc.theater.config.SpecialCode;
+import com.jpmc.theater.domain.Customer;
+import com.jpmc.theater.domain.Movie;
 import com.jpmc.theater.domain.MovieInfo;
+import com.jpmc.theater.domain.Reservation;
 import com.jpmc.theater.price.BasePricingService;
 import com.jpmc.theater.price.PricingService;
 import com.jpmc.theater.price.rule.DiscountRule;
@@ -13,6 +18,7 @@ import com.jpmc.theater.reserve.ReservationService;
 import com.jpmc.theater.schedule.BaseScheduleService;
 import com.jpmc.theater.schedule.ScheduleService;
 import com.jpmc.theater.util.LocalDateProvider;
+import com.jpmc.theater.util.ObjectMapperProvider;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +39,7 @@ import java.util.TreeMap;
 public class Theater {
 
     private final ReservationService reservationService;
+    private final ScheduleService scheduleService;
     private final SchedulePrinter schedulePrinter;
 
     /**
@@ -51,29 +58,29 @@ public class Theater {
      * Print Schedule
      */
     public void printSchedule() {
-        schedulePrinter.print();
+        schedulePrinter.print(scheduleService.getSchedule());
     }
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         Theater theater = createTheater();
         theater.printSchedule();
     }
 
     private static Theater createTheater() {
         ScheduleService scheduleService = new BaseScheduleService(LocalDateProvider.getInstance(), getTimeToMovieMap());
-        Set<DiscountRule> discountRules = getDiscountRules();
+        Set<DiscountRule> discountRules = DiscountConfig.getDiscountRules();
         PricingService pricingService = new BasePricingService(discountRules);
         ReservationService reservationService = new BaseReservationService(scheduleService);
         SchedulePrinter combineSchedulePrinter = createSchedulePrinter(scheduleService, pricingService);
 
-        return new Theater(reservationService, combineSchedulePrinter);
+        return new Theater(reservationService, scheduleService, combineSchedulePrinter);
     }
 
     private static SortedMap<LocalTime, Movie> getTimeToMovieMap() {
         MovieInfo spiderManMovieInfo = new MovieInfo("Spider-Man: No Way Home", Duration.ofMinutes(90));
         MovieInfo turningRedMovieInfo = new MovieInfo("Turning Red", Duration.ofMinutes(85));
         MovieInfo theBatManMovieInfo = new MovieInfo("The Batman", Duration.ofMinutes(95));
-        Movie spiderMan = new Movie(spiderManMovieInfo, BigDecimal.valueOf(12.5), 12345);
+        Movie spiderMan = new Movie(spiderManMovieInfo, BigDecimal.valueOf(12.5), SpecialCode.SUPER_SPECIAL);
         Movie turningRed = new Movie(turningRedMovieInfo, BigDecimal.valueOf(11));
         Movie theBatMan = new Movie(theBatManMovieInfo, BigDecimal.valueOf(9));
 
@@ -90,13 +97,9 @@ public class Theater {
         return timeToMovieMap;
     }
 
-    private static Set<DiscountRule> getDiscountRules() {
-        return Set.of();
-    }
-
     private static SchedulePrinter createSchedulePrinter(ScheduleService scheduleService, PricingService pricingService) {
-        SchedulePrinter simpleTextSchedulePrinter = new SimpleTextSchedulePrinter(scheduleService, LocalDateProvider.getInstance(), pricingService);
-        SchedulePrinter jsonSchedulePrinter = new JsonSchedulePrinter(scheduleService, LocalDateProvider.getInstance(), pricingService);
+        SchedulePrinter simpleTextSchedulePrinter = new SimpleTextSchedulePrinter(LocalDateProvider.getInstance(), pricingService);
+        SchedulePrinter jsonSchedulePrinter = new JsonSchedulePrinter(ObjectMapperProvider.getDefaultObjectMapper());
         List<SchedulePrinter> schedulePrinters = List.of(simpleTextSchedulePrinter, jsonSchedulePrinter);
         return new CombineSchedulePrinter(schedulePrinters);
     }

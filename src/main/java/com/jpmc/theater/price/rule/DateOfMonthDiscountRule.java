@@ -1,12 +1,12 @@
 package com.jpmc.theater.price.rule;
 
-import com.jpmc.theater.Showing;
+import com.jpmc.theater.domain.Showing;
 import com.jpmc.theater.price.domain.Discount;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
-import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 
@@ -16,25 +16,27 @@ import java.util.Optional;
  */
 @EqualsAndHashCode(callSuper = true)
 @ToString
-public class DateDiscountRule extends AbstractBastDiscountRule {
+@Slf4j
+public class DateOfMonthDiscountRule extends AbstractBastDiscountRule {
 
-    private final Map<LocalDate, Discount> discountMap;
+    private final Map<Integer, Discount> discountMap;
 
     /**
      * Create instance
      * @param discountMap discount map
      */
-    public DateDiscountRule(Map<LocalDate, Discount> discountMap) {
+    public DateOfMonthDiscountRule(Map<Integer, Discount> discountMap) {
         this.discountMap = Map.copyOf(discountMap);
     }
 
     /**
-     * {@inheritDoc}
+     * Get discount some day of month.
      */
     @Override
     @Nonnull
     protected Optional<Discount> getDiscount(@Nonnull Showing showing) {
-        LocalDate startDate = showing.getShowStartTime().toLocalDate();
+        int startDate = showing.getShowStartTime().getDayOfMonth();
+        log.debug("Trying to find discount for showing: {}, discount map: {}", showing, discountMap);
         return Optional.ofNullable(discountMap.get(startDate));
     }
 

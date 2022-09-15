@@ -1,9 +1,10 @@
 package com.jpmc.theater.price;
 
-import com.jpmc.theater.Showing;
+import com.jpmc.theater.domain.Showing;
 import com.jpmc.theater.price.rule.DiscountRule;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import java.util.Set;
  */
 @EqualsAndHashCode
 @ToString
+@Slf4j
 public class BasePricingService implements PricingService {
 
     private final Set<DiscountRule> discountRules;
@@ -37,8 +39,10 @@ public class BasePricingService implements PricingService {
         BigDecimal price = discountRules.stream()
                 .map(rule -> rule.getPriceWithDiscount(showing))
                 .min(Comparator.naturalOrder())
-                .orElseGet(() -> showing.getMovie().getTicketPrice());
-        return price.multiply(BigDecimal.valueOf(audienceCount));
+                .orElseGet(() -> showing.getMovie().getTicketPrice())
+                .multiply(BigDecimal.valueOf(audienceCount));
+        log.debug("Calculated overall price: {}, audience count: {}, showing: {}", price, audienceCount, showing);
+        return price;
     }
 
     /**

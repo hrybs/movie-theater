@@ -1,6 +1,7 @@
 .classpath
 .project
 .idea
+.DS_Store
 *.iml
 
 target

@@ -1,6 +1,6 @@
-package com.jpmc.theater;
+package com.jpmc.theater.domain;
 
-import com.jpmc.theater.domain.MovieInfo;
+import com.jpmc.theater.config.SpecialCode;
 import lombok.Getter;
 
 import lombok.EqualsAndHashCode;
@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 public class Movie {
     private final MovieInfo movieInfo;
     private final BigDecimal ticketPrice;
-    private final long specialCode;
+    private final SpecialCode specialCode;
 
     /**
      * Create instance
@@ -29,7 +29,7 @@ public class Movie {
      * @param ticketPrice ticket priice
      */
     public Movie(@Nonnull MovieInfo movieInfo, @Nonnull BigDecimal ticketPrice) {
-        this(movieInfo, ticketPrice, 0);
+        this(movieInfo, ticketPrice, null);
     }
 
     /**
@@ -39,7 +39,7 @@ public class Movie {
      * @param ticketPrice ticket price
      * @param specialCode special code
      */
-    public Movie(@Nonnull MovieInfo movieInfo, @Nonnull BigDecimal ticketPrice, long specialCode) {
+    public Movie(@Nonnull MovieInfo movieInfo, @Nonnull BigDecimal ticketPrice, SpecialCode specialCode) {
         this.movieInfo = movieInfo;
         this.ticketPrice = ticketPrice;
         this.specialCode = specialCode;

@@ -1,7 +1,7 @@
 package com.jpmc.theater.reserve;
 
-import com.jpmc.theater.Customer;
-import com.jpmc.theater.Reservation;
+import com.jpmc.theater.domain.Customer;
+import com.jpmc.theater.domain.Reservation;
 
 import javax.annotation.Nonnull;
 

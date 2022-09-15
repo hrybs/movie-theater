@@ -1,7 +1,7 @@
 package com.jpmc.theater.schedule;
 
-import com.jpmc.theater.Movie;
-import com.jpmc.theater.Showing;
+import com.jpmc.theater.domain.Movie;
+import com.jpmc.theater.domain.Showing;
 
 import javax.annotation.Nonnull;
 import java.time.LocalTime;

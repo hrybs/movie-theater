@@ -1,12 +1,12 @@
 package com.jpmc.theater.print;
 
 import com.jpmc.theater.price.PricingService;
-import com.jpmc.theater.schedule.ScheduleService;
 import com.jpmc.theater.util.LocalDateProvider;
-import com.jpmc.theater.Showing;
+import com.jpmc.theater.domain.Showing;
 
 import lombok.RequiredArgsConstructor;
 
+import javax.annotation.Nonnull;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.List;
@@ -20,10 +20,9 @@ public class SimpleTextSchedulePrinter implements SchedulePrinter {
 
     private static final String MESSAGE_DELIMITER = "===================================================";
     private static final String TIME_PATTERN = "(%s hour%s %s minute%s)";
-    private static final String MESSAGE_PATTERN = "%s: %s %s %s $%f.2" + System.lineSeparator();
+    private static final String MESSAGE_PATTERN = "%s: %s %s %s $%.2f" + System.lineSeparator();
     private static final int PRICE_PRECISION = 2;
 
-    private final ScheduleService scheduleService;
     private final LocalDateProvider provider;
     private final PricingService pricingService;
 
@@ -32,19 +31,15 @@ public class SimpleTextSchedulePrinter implements SchedulePrinter {
      *
      */
     @Override
-    public void print() {
-        printSchedule(scheduleService.getSchedule(), provider);
-    }
-
-    private void printSchedule(List<Showing> schedule, LocalDateProvider provider) {
+    public void print(@Nonnull List<Showing> schedule) {
         System.out.println(provider.currentDate());
         System.out.println(MESSAGE_DELIMITER);
         schedule.forEach(this::printScheduleRow);
         System.out.println(MESSAGE_DELIMITER);
     }
 
-    private void printScheduleRow(Showing showing) {
-        System.out.printf(MESSAGE_PATTERN,
+    public String printScheduleRow(@Nonnull Showing showing) {
+        String scheduleRow = String.format(MESSAGE_PATTERN,
                           showing.getSequenceOfTheDay(),
                           showing.getShowStartTime(),
                           showing.getMovie().getMovieInfo().getTitle(),
@@ -52,6 +47,8 @@ public class SimpleTextSchedulePrinter implements SchedulePrinter {
                           pricingService.getFullPrice(showing)
                                   .setScale(PRICE_PRECISION, RoundingMode.HALF_DOWN)
                                   .doubleValue());
+        System.out.print(scheduleRow);
+        return scheduleRow;
     }
 
     private String humanReadableFormat(Duration duration) {

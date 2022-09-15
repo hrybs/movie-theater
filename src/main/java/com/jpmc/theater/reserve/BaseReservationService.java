@@ -1,12 +1,13 @@
 package com.jpmc.theater.reserve;
 
 import com.google.common.base.Preconditions;
-import com.jpmc.theater.Customer;
-import com.jpmc.theater.Reservation;
-import com.jpmc.theater.Showing;
+import com.jpmc.theater.domain.Customer;
+import com.jpmc.theater.domain.Reservation;
+import com.jpmc.theater.domain.Showing;
 import com.jpmc.theater.schedule.ScheduleService;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -19,13 +20,15 @@ import java.util.stream.Collectors;
  */
 @EqualsAndHashCode
 @ToString
+@Slf4j
 public class BaseReservationService implements ReservationService {
 
     private final Map<Integer, Showing> sequenceToShowing;
 
-    public BaseReservationService(ScheduleService scheduleService) {
+    public BaseReservationService(@Nonnull ScheduleService scheduleService) {
         sequenceToShowing =
-                scheduleService.getSchedule().stream()
+                scheduleService.getSchedule()
+                        .stream()
                         .collect(Collectors.toUnmodifiableMap(Showing::getSequenceOfTheDay, Function.identity()));
     }
 
@@ -35,12 +38,14 @@ public class BaseReservationService implements ReservationService {
     @Override
     @Nonnull
     public Reservation reserve(@Nonnull Customer customer, int sequence, int numberOfTickets) {
-        Preconditions.checkArgument(numberOfTickets > 0, "Number of tickets can't be less then 1. NumberOfTickets: {}", numberOfTickets);
-        Preconditions.checkArgument(sequence > 0, "Sequence can't be less then 1. Sequence: {}", sequence);
-        Preconditions.checkArgument(sequenceToShowing.size() - 1 > 0, "Sequence can't be bigger then max allowed: {}. Sequence: {}", sequenceToShowing.size(), sequence);
+        Preconditions.checkArgument(numberOfTickets > 0, "Number of tickets can't be less then 1. NumberOfTickets: %s", numberOfTickets);
+        Preconditions.checkArgument(sequence > 0, "Sequence can't be less then 1. Sequence: %s", sequence);
+        Preconditions.checkArgument(sequence <= sequenceToShowing.size(), "Sequence can't be bigger then max allowed: %s. Sequence: %s", sequenceToShowing.size(), sequence);
 
         Showing showing = sequenceToShowing.get(sequence);
-        return new Reservation(customer, showing, numberOfTickets);
+        Reservation reservation = new Reservation(customer, showing, numberOfTickets);
+        log.info("Reservation has been created: {}", reservation);
+        return reservation;
     }
 
 }

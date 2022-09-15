@@ -10,7 +10,7 @@ import java.time.LocalDate;
  * The class is thread safe
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class LocalDateProvider {
+public class LocalDateProvider {
 
     private static volatile LocalDateProvider instance = null;
 

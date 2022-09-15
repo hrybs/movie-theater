@@ -1,6 +1,8 @@
 package com.jpmc.theater.print;
 
+import com.jpmc.theater.domain.Showing;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
 /**
@@ -16,7 +18,7 @@ public class CombineSchedulePrinter implements SchedulePrinter {
      *
      * @param printers schedule printers
      */
-    public CombineSchedulePrinter(List<SchedulePrinter> printers) {
+    public CombineSchedulePrinter(@Nonnull List<SchedulePrinter> printers) {
         this.printers = List.copyOf(printers);
     }
 
@@ -24,8 +26,8 @@ public class CombineSchedulePrinter implements SchedulePrinter {
      * {@inheritDoc}
      */
     @Override
-    public void print() {
-        printers.forEach(SchedulePrinter::print);
+    public void print(@Nonnull List<Showing> schedule) {
+        printers.forEach(printer -> printer.print(schedule));
     }
 
 }

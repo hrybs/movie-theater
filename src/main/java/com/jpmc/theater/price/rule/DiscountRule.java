@@ -1,6 +1,6 @@
 package com.jpmc.theater.price.rule;
 
-import com.jpmc.theater.Showing;
+import com.jpmc.theater.domain.Showing;
 
 import javax.annotation.Nonnull;
 import java.math.BigDecimal;

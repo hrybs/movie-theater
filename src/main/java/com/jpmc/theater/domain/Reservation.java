@@ -1,4 +1,4 @@
-package com.jpmc.theater;
+package com.jpmc.theater.domain;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

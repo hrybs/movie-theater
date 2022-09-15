@@ -1,0 +1,39 @@
+package com.jpmc.theater.price.rule;
+
+import com.jpmc.theater.domain.Showing;
+import com.jpmc.theater.test.util.TestDataUtil;
+import com.jpmc.theater.price.domain.Discount;
+import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.util.Map;
+
+import static com.jpmc.theater.test.util.TestDataUtil.SEQUENCE_VALUE_DISCOUNT;
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class SequenceDiscountRuleTest {
+
+    private SequenceDiscountRule sequenceDiscountRule;
+
+    @Test
+    void shouldGetDiscountWhenPresent() {
+        Map<Integer, Discount> discountMap = TestDataUtil.getSequenceDiscountMap();
+        sequenceDiscountRule = new SequenceDiscountRule(discountMap);
+        Showing showing = TestDataUtil.getShowing();
+        BigDecimal expectedPriceWithDiscount =
+                TestDataUtil.TEST_FULL_PRICE.subtract(SEQUENCE_VALUE_DISCOUNT.getValue());
+
+        assertThat(sequenceDiscountRule.getPriceWithDiscount(showing)).isEqualTo(expectedPriceWithDiscount);
+    }
+
+    @Test
+    void shouldNotGetDiscountWhenAbsent() {
+        Map<Integer, Discount> discountMap = Map.of();
+        sequenceDiscountRule = new SequenceDiscountRule(discountMap);
+        Showing showing = TestDataUtil.getShowing();
+        BigDecimal expectedPriceWithDiscount = TestDataUtil.TEST_FULL_PRICE;
+
+        assertThat(sequenceDiscountRule.getPriceWithDiscount(showing)).isEqualTo(expectedPriceWithDiscount);
+    }
+
+}

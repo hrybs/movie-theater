@@ -1,10 +1,12 @@
 package com.jpmc.theater.schedule;
 
 import com.jpmc.theater.util.LocalDateProvider;
-import com.jpmc.theater.Movie;
-import com.jpmc.theater.Showing;
+import com.jpmc.theater.domain.Movie;
+import com.jpmc.theater.domain.Showing;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nonnull;
 import java.time.LocalDate;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
  */
 @EqualsAndHashCode(of="schedule")
 @ToString
+@Slf4j
 public class BaseScheduleService implements ScheduleService {
 
     private final LocalDateProvider dateProvider;
@@ -32,7 +35,8 @@ public class BaseScheduleService implements ScheduleService {
      * @param dateProvider date provider
      * @param timeToMovieMap time to movie map
      */
-    public BaseScheduleService(LocalDateProvider dateProvider, SortedMap<LocalTime, Movie> timeToMovieMap) {
+    public BaseScheduleService(@NonNull LocalDateProvider dateProvider,
+                               @Nonnull SortedMap<LocalTime, Movie> timeToMovieMap) {
         this.dateProvider = dateProvider;
         refresh(timeToMovieMap);
     }
@@ -47,6 +51,7 @@ public class BaseScheduleService implements ScheduleService {
                 .stream()
                 .map(entry -> new Showing(entry.getValue(), sequence.getAndIncrement(), LocalDateTime.of(currentDate, entry.getKey())))
                 .collect(Collectors.toUnmodifiableList());
+        log.debug("Schedule has been calculated: {}", schedule);
     }
 
     /**
